@@ -1,101 +1,279 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useRef, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Send, ThumbsUp, ThumbsDown, Smile } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function Home() {
+// Simple utility function to merge className strings
+const mergeClasses = (...classes) => {
+  return classes.filter(Boolean).join(' ');
+};
+
+const ChatInterface = () => {
+  const [messages, setMessages] = useState([
+    { id: 1, text: "Olá! Como posso ajudar você hoje? 😊", sender: "bot" },
+  ]);
+  const [inputText, setInputText] = useState("");
+  const [feedbackText, setFeedbackText] = useState("");
+  const [rating, setRating] = useState("");
+  const [showFeedbackSuccess, setShowFeedbackSuccess] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [userInfo, setUserInfo] = useState({ name: "", email: "" });
+  const [isUserInfoSubmitted, setIsUserInfoSubmitted] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const botResponses = [
+    "Entendi! 🤔 Deixe-me ver o que posso fazer...",
+    "Certo! 👍 Vou procurar a melhor resposta para você.",
+    "A caminho! 🚀 Já estou buscando informações relevantes.",
+    "Interessante! ✨ Vou tentar encontrar a solução ideal."
+  ];
+
+  const handleSend = () => {
+    if (inputText.trim()) {
+      setMessages((prev) => [
+        ...prev,
+        { id: prev.length + 1, text: inputText, sender: "user" },
+      ]);
+
+      setTimeout(() => {
+        const randomResponse =
+          botResponses[Math.floor(Math.random() * botResponses.length)];
+        setMessages((prev) => [
+          ...prev,
+          { id: prev.length + 1, text: randomResponse, sender: "bot" },
+        ]);
+      }, 1000);
+
+      setInputText("");
+    }
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleFeedbackSubmit = () => {
+    console.log("Feedback submitted:", { rating, feedbackText });
+    setShowFeedbackSuccess(true);
+    setTimeout(() => {
+      setShowFeedbackSuccess(false);
+      setIsDialogOpen(false);
+      setFeedbackText("");
+      setRating("");
+    }, 3000);
+  };
+
+  const resetFeedback = () => {
+    setFeedbackText("");
+    setRating("");
+    setShowFeedbackSuccess(false);
+  };
+
+  const handleUserInfoSubmit = () => {
+    if (userInfo.name && userInfo.email) {
+      setIsUserInfoSubmitted(true);
+    }
+  };
+
+  if (!isUserInfoSubmitted) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl font-semibold">Por favor, insira seus dados</CardTitle>
+            <CardDescription>
+              Precisamos das suas informações para continuar.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome</Label>
+              <Input
+                id="name"
+                type="text"
+                value={userInfo.name}
+                onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
+                placeholder="Digite seu nome"
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={userInfo.email}
+                onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
+                placeholder="Digite seu email"
+                className="w-full"
+              />
+            </div>
+            <Button 
+              onClick={handleUserInfoSubmit} 
+              className="w-full"
+            >
+              Continuar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
+      <Card className="w-full max-w-4xl h-[600px] md:h-[700px] flex flex-col relative">
+        <CardHeader className="border-b px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-10 w-10 border-2 border-primary bg-primary/10">
+                <AvatarFallback>AI</AvatarFallback>
+              </Avatar>
+              <CardTitle className="text-lg">Assistente Virtual - {userInfo.name}</CardTitle>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetFeedback(); }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Feedback
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Nos conte sua experiência!</DialogTitle>
+                  <CardDescription>
+                    Seu feedback nos ajuda a melhorar! 😊
+                  </CardDescription>
+                </DialogHeader>
+                <div className="space-y-4 p-4">
+                  <RadioGroup value={rating} onValueChange={setRating} className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="positive" id="positive" />
+                      <Label htmlFor="positive" className="flex items-center gap-1">
+                        <ThumbsUp className="h-4 w-4" /> Positivo
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="negative" id="negative" />
+                      <Label htmlFor="negative" className="flex items-center gap-1">
+                        <ThumbsDown className="h-4 w-4" /> Negativo
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  <div className="space-y-2">
+                    <Label htmlFor="feedback">Comentários adicionais</Label>
+                    <Textarea
+                      id="feedback"
+                      value={feedbackText}
+                      onChange={(e) => setFeedbackText(e.target.value)}
+                      placeholder="Compartilhe sua experiência..."
+                      className="resize-none h-20"
+                    />
+                  </div>
+                </div>
+                {showFeedbackSuccess && (
+                  <Alert className="mx-4 mb-4">
+                    <AlertDescription>
+                      Feedback enviado com sucesso! 🎉 Muito obrigado! 🙏
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <DialogFooter className="px-4 pb-4">
+                  <Button onClick={handleFeedbackSubmit}>
+                    Enviar Feedback
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-1 p-0 relative">
+          <ScrollArea className="h-[calc(100%-2rem)] px-4 py-6">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={mergeClasses("flex mb-4",
+                  message.sender === "user" ? "justify-end" : "justify-start"
+                )}
+              >
+                <div className={mergeClasses("flex items-start gap-2 max-w-[80%]",
+                  message.sender === "user" ? "flex-row-reverse" : ""
+                )}>
+                  <Avatar className={mergeClasses("h-8 w-8",
+                    message.sender === "bot" 
+                      ? "bg-primary/10 border-2 border-primary" 
+                      : "bg-muted"
+                  )}>
+                    <AvatarFallback>{message.sender === "user" ? "U" : "AI"}</AvatarFallback>
+                  </Avatar>
+                  <div
+                    className={mergeClasses("rounded-lg p-3 text-sm",
+                      message.sender === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {message.text}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </ScrollArea>
+        </CardContent>
+        <div className="border-t p-4">
+          <div className="flex items-center gap-2 relative">
+            <Input
+              type="text"
+              placeholder="Digite sua mensagem..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyPress}
+              className="pl-10 pr-4 py-6 h-12 rounded-full bg-muted/50"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+              <Smile className="h-5 w-5" />
+            </div>
+            <Button
+              onClick={handleSend}
+              size="icon"
+              className="rounded-full h-12 w-12 shrink-0"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </Card>
     </div>
   );
-}
+};
+
+export default ChatInterface;
