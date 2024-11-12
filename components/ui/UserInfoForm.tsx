@@ -1,12 +1,11 @@
-"use client";
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import ChatInterface from '@/components/ui/ChatInterface';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, AlertCircle, Loader2, Coffee, Send, Smile } from "lucide-react";
+import { CheckCircle2, AlertCircle, Loader2, Send, Smile } from "lucide-react";
+import Confetti from '@/components/ui/Confetti';
 
 const UserInfoForm = ({ onSubmit }) => {
   const [userInfo, setUserInfo] = useState({ name: '', email: '' });
@@ -14,18 +13,17 @@ const UserInfoForm = ({ onSubmit }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [greeting, setGreeting] = useState('👋 Oi! Vamos começar?');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [greeting, setGreeting] = useState('👋 Welcome!');
 
-  // Fun greetings based on time of day
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
-      setGreeting('☀️ Bom dia! Pronto para uma conversa?');
+      setGreeting('🌅 Good morning! Ready to chat?');
     } else if (hour >= 12 && hour < 18) {
-      setGreeting('👋 Boa tarde! Que tal batermos um papo?');
+      setGreeting('☀️ Good afternoon! Let\'s talk!');
     } else {
-      setGreeting('🌙 Boa noite! Ainda bem que você apareceu!');
+      setGreeting('🌙 Good evening! Perfect time for a chat!');
     }
   }, []);
 
@@ -40,178 +38,256 @@ const UserInfoForm = ({ onSubmit }) => {
 
   const handleFocus = (field) => {
     setFocusedField(field);
-    // Update greeting based on field focus
     if (field === 'name') {
-      setGreeting('😊 Como você se chama?');
+      setGreeting('😊 What should I call you?');
     } else if (field === 'email') {
-      setGreeting('📧 Precisamos manter contato!');
+      setGreeting('📧 Let\'s stay connected!');
     }
   };
 
   const handleBlur = () => {
     setFocusedField(null);
     if (userInfo.name) {
-      setGreeting(`✨ Prazer em conhecer você, ${userInfo.name}!`);
+      setGreeting(`✨ Nice to meet you, ${userInfo.name}!`);
     }
   };
 
-  useEffect(() => {
-    const newErrors = { name: '', email: '' };
-    
-    if (userInfo.name && !validateName(userInfo.name)) {
-      newErrors.name = 'Ops! Nome muito curto';
-    }
-    
-    if (userInfo.email && !validateEmail(userInfo.email)) {
-      newErrors.email = 'Hmm... Este email parece diferente';
-    }
-    
-    setErrors(newErrors);
-  }, [userInfo]);
-
   const handleSubmit = async () => {
-    if (!validateName(userInfo.name) || !validateEmail(userInfo.email)) {
-      return;
-    }
+    if (!validateName(userInfo.name) || !validateEmail(userInfo.email)) return;
 
     setIsLoading(true);
-    setGreeting('🚀 Preparando tudo para você...');
+    setGreeting('🚀 Getting everything ready...');
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       setIsSuccess(true);
-      setGreeting(`🎉 Tudo pronto, ${userInfo.name}!`);
+      setGreeting(`🎉 All set, ${userInfo.name}!`);
+      setShowConfetti(true);
       
       setTimeout(() => {
-        localStorage.setItem('userInfo', JSON.stringify(userInfo));
-        setSubmitted(true);
-      }, 1500);
-      
+        if (onSubmit) onSubmit(userInfo);
+      }, 1000);
     } catch (error) {
-      setErrors(prev => ({ ...prev, submit: 'Algo deu errado. Vamos tentar de novo?' }));
-      setGreeting('😅 Opa! Tivemos um pequeno contratempo...');
+      setErrors(prev => ({ ...prev, submit: 'Something went wrong. Let\'s try again?' }));
+      setGreeting('😅 Oops! A little hiccup...');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (submitted) {
-    if (onSubmit) {
-      onSubmit(userInfo);
-    }
-    return <ChatInterface />; // ChatInterface will get user info from localStorage
-  }
-
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
-      <Card className="w-full max-w-md transform transition-all duration-300 hover:shadow-lg">
-        <CardHeader>
-          <div className="flex items-center gap-2 mb-2">
-            <Coffee className="w-5 h-5 text-blue-500" />
-            <CardTitle className="text-2xl font-semibold">Vamos conversar?</CardTitle>
-          </div>
-          <CardDescription className="text-lg animate-in slide-in-from-bottom-2">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] p-4">
+      <Confetti active={showConfetti} />
+      
+      <Card className="w-full max-w-md transform transition-all duration-300 bg-[#3a3a3a] border-none shadow-[inset_0_0px_0px_0.5px_rgba(0,0,0,0.2),rgba(0,0,0,0.03)_0px_0.25em_0.3em_-1px,rgba(0,0,0,0.02)_0px_0.15em_0.25em_-1px]">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-white">
+            Let's Chat
+          </CardTitle>
+          <CardDescription className="text-lg font-medium text-gray-300">
             {greeting}
           </CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-6">
-          <div className="space-y-4 animate-in slide-in-from-bottom-3">
+          <div className="space-y-4">
+            {/* Name Input */}
             <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center gap-2 text-base">
-                Nome
+              <Label htmlFor="name" className="text-sm font-medium text-white flex items-center gap-2">
+                Name
                 {userInfo.name && validateName(userInfo.name) && (
-                  <Smile className="w-4 h-4 text-green-500 animate-in zoom-in" />
+                  <Smile className="w-4 h-4 text-green-500 animate-bounce" />
                 )}
               </Label>
-              <Input
-                id="name"
-                value={userInfo.name}
-                onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
-                onFocus={() => handleFocus('name')}
-                onBlur={handleBlur}
-                placeholder="Como prefere ser chamado?"
-                className={`text-base transition-all duration-300 ${
-                  focusedField === 'name' ? 'scale-[1.02] shadow-md' : ''
-                } ${errors.name ? 'border-red-300 bg-red-50' : ''}`}
-              />
+              <div className="relative">
+                <Input
+                  id="name"
+                  value={userInfo.name}
+                  onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
+                  onFocus={() => handleFocus('name')}
+                  onBlur={handleBlur}
+                  placeholder="What should we call you?"
+                  className={`pl-4 h-11 bg-[#2e2e2e] text-white border-none transition-all duration-300
+                    ${focusedField === 'name' ? 'ring-2 ring-[#22ffff] ring-offset-2 ring-offset-[#3a3a3a] scale-105' : ''}
+                    ${errors.name ? 'ring-2 ring-red-500' : ''}`}
+                />
+              </div>
               {errors.name && (
-                <div className="text-sm text-red-500 flex items-center gap-1 animate-in slide-in-from-left">
+                <div className="text-sm text-red-400 flex items-center gap-1 animate-in slide-in-from-left">
                   <AlertCircle className="w-4 h-4" />
                   {errors.name}
                 </div>
               )}
             </div>
 
+            {/* Email Input */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2 text-base">
+              <Label htmlFor="email" className="text-sm font-medium text-white flex items-center gap-2">
                 Email
                 {userInfo.email && validateEmail(userInfo.email) && (
-                  <CheckCircle2 className="w-4 h-4 text-green-500 animate-in zoom-in" />
+                  <CheckCircle2 className="w-4 h-4 text-green-500 animate-bounce" />
                 )}
               </Label>
-              <Input
-                id="email"
-                type="email"
-                value={userInfo.email}
-                onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
-                onFocus={() => handleFocus('email')}
-                onBlur={handleBlur}
-                placeholder="Seu melhor email"
-                className={`text-base transition-all duration-300 ${
-                  focusedField === 'email' ? 'scale-[1.02] shadow-md' : ''
-                } ${errors.email ? 'border-red-300 bg-red-50' : ''}`}
-              />
+              <div className="relative">
+                <Input
+                  id="email"
+                  type="email"
+                  value={userInfo.email}
+                  onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
+                  onFocus={() => handleFocus('email')}
+                  onBlur={handleBlur}
+                  placeholder="your.email@example.com"
+                  className={`pl-4 h-11 bg-[#2e2e2e] text-white border-none transition-all duration-300
+                    ${focusedField === 'email' ? 'ring-2 ring-[#22ffff] ring-offset-2 ring-offset-[#3a3a3a] scale-105' : ''}
+                    ${errors.email ? 'ring-2 ring-red-500' : ''}`}
+                />
+              </div>
               {errors.email && (
-                <div className="text-sm text-red-500 flex items-center gap-1 animate-in slide-in-from-left">
+                <div className="text-sm text-red-400 flex items-center gap-1 animate-in slide-in-from-left">
                   <AlertCircle className="w-4 h-4" />
                   {errors.email}
                 </div>
               )}
             </div>
 
+            {/* Success Message */}
             {isSuccess && (
-              <Alert className="bg-green-50 border-green-200 animate-in slide-in-from-bottom">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <AlertDescription className="text-green-700">
-                  Perfeito! Estamos quase lá...
+              <Alert className="bg-green-500/20 border-green-500/30 text-green-300">
+                <CheckCircle2 className="w-4 h-4 text-green-400" />
+                <AlertDescription>
+                  Perfect! Just a moment...
                 </AlertDescription>
               </Alert>
             )}
 
-            {errors.submit && (
-              <Alert variant="destructive" className="animate-in slide-in-from-bottom">
-                <AlertCircle className="w-4 h-4" />
-                <AlertDescription>{errors.submit}</AlertDescription>
-              </Alert>
-            )}
-
-            <Button 
+            {/* Submit Button */}
+            <button
               onClick={handleSubmit}
               disabled={isLoading || !validateEmail(userInfo.email) || !validateName(userInfo.name)}
-              className={`w-full h-12 text-base transition-all duration-300 ${
-                isLoading ? 'bg-gray-400' : 
-                validateEmail(userInfo.email) && validateName(userInfo.name) 
-                  ? 'bg-green-500 hover:bg-green-600 hover:scale-[1.02]' 
-                  : ''
-              }`}
+              className={`btn w-full h-12 text-base font-medium transition-all duration-300 relative group
+                ${isLoading ? 'opacity-50' : ''}
+                ${validateEmail(userInfo.email) && validateName(userInfo.name) && !isLoading
+                  ? 'active' 
+                  : 'opacity-70'
+                }`}
             >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Preparando...
-                </div>
-              ) : isSuccess ? (
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5" />
-                  Pronto!
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Send className="w-5 h-5" />
-                  Vamos lá!
-                </div>
-              )}
-            </Button>
+              <span className="text-white flex items-center justify-center gap-2">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Getting Ready...
+                  </>
+                ) : isSuccess ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5" />
+                    All Set!
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Let's Begin!
+                  </>
+                )}
+              </span>
+            </button>
+
+            <style jsx>{`
+              .btn {
+                border-radius: 0.875em;
+                box-shadow: inset 0 0px 0px 0.5px rgba(0, 0, 0, 0.2),
+                  rgba(0, 0, 0, 0.03) 0px 0.25em 0.3em -1px,
+                  rgba(0, 0, 0, 0.02) 0px 0.15em 0.25em -1px;
+                position: relative;
+                background: transparent;
+                outline: none;
+                border: none;
+                transform: scale(1);
+                z-index: 1;
+              }
+              
+              .btn::before {
+                content: "";
+                position: absolute;
+                inset: 0em;
+                background-image: conic-gradient(
+                  from var(--mask) at 50% 50%,
+                  #22ffff 0%,
+                  #3c64ff 11%,
+                  #c03afc 22%,
+                  #ff54e8 33%,
+                  #ff5959 44%,
+                  #ff9a07 55%,
+                  #feff07 66%,
+                  #58ff07 77%,
+                  #07ff77 88%,
+                  #22ffff 100%
+                );
+                filter: blur(0.5em);
+                z-index: -2;
+                opacity: 0.4;
+                scale: 0.96 0.9;
+                border-radius: 0.75em;
+                transition: all 0.25s ease;
+              }
+              
+              .btn:after {
+                z-index: -1;
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.2);
+                box-shadow: inset 0 1px 0px 0px rgba(255, 255, 255, 0.3),
+                  inset 0 -1px 0px 0px rgba(255, 255, 255, 0.6);
+                border-radius: 0.875em;
+                transition: all 0.25s ease;
+              }
+              
+              .btn:hover::before,
+              .btn:focus::before {
+                opacity: 0.6;
+                scale: 1;
+                filter: blur(1em);
+              }
+              
+              .btn:focus::before,
+              .btn.active::before {
+                animation: 2s ease-in-out pulse infinite both;
+              }
+              
+              .btn:hover::after,
+              .btn:focus::after,
+              .btn.active::after {
+                background: rgba(255, 255, 255, 0.5);
+                backdrop-filter: blur(30px);
+                box-shadow: inset 0 1px 0px 0px rgba(255, 255, 255, 0.66),
+                  inset 0 -1px 0px 0px rgba(255, 255, 255, 0.5);
+              }
+              
+              @property --mask {
+                syntax: "<angle>";
+                inherits: false;
+                initial-value: 30deg;
+              }
+              
+              @keyframes pulse {
+                0%,
+                100% {
+                  opacity: 0.6;
+                  scale: 1;
+                  --mask: 30deg;
+                }
+                70% {
+                  --mask: 390deg;
+                }
+                85% {
+                  opacity: 0.4;
+                  scale: 0.96 0.9;
+                }
+                100% {
+                  --mask: 390deg;
+                }
+              }
+            `}</style>
           </div>
         </CardContent>
       </Card>
