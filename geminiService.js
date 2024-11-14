@@ -4,17 +4,17 @@ class GeminiService {
   constructor() {
     const apiKey = process.env.GOOGLE_API_KEY || 'AIzaSyAE8EmRFUOm911J3w9Zw0gSwY73_1eaRk0';
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
     
     this.generationConfig = {
-      temperature: 0.5,
-      topP: 0.65,
-      topK: 64,
+      temperature: 0.45,
+      topP: 1,
+      topK: 20,
       maxOutputTokens: 200,
     };
 
     this.initialParts = [
-    {text: " responda sempre em portugues. Nunca em ingles e de forma curta e amigavel.."},
+    {text: "  sempre assuma que a pessoa com quem voce esta conversando é brasileira e fala portugues. Você é um guia de carreira amigável e prestativo especializado em design de produto (UI/UX). Responda às perguntas do usuário de forma clara, concisa e humanizada, sempre em português brasileiro. Se o usuário digitar uma palavra que existe tanto em inglês quanto em português, interprete-a como a versão em português e responda em português brasileiro. Mantenha suas respostas curtas e diretas."},
     {text: "input: What are charts?"},
     {text: "output: Charts are graphical representations of data that help present complex information in a visual and easy-to-understand format. Charts use various visual elements, such as bars, lines, pie slices, or points, to represent data points, relationships, or patterns. They are commonly used to display trends, comparisons, distributions, or relationships between different data sets. Charts are effective tools for summarizing and communicating data insights, allowing users to quickly grasp and interpret information.Explore ourIntro to Charts in UIlesson to learn more."},
     {text: "input: What are the key considerations when choosing a chart type for data visualization?"},
