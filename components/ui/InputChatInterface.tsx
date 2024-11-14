@@ -12,14 +12,15 @@ const InputChatInterface = ({
   onBlur, 
   onChange,
   onSendHover,
-  onClick 
+  onClick,
+  disabled
 }) => {
   const [inputText, setInputText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [charCount, setCharCount] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const inputRef = useRef(null);
-  const maxChars = 56;
+  const maxChars = 256; // Increased for Gemini API compatibility
 
   useEffect(() => {
     setCharCount(inputText.length);
@@ -37,7 +38,7 @@ const InputChatInterface = ({
   };
 
   const handleSend = () => {
-    if (inputText.trim() && charCount <= maxChars) {
+    if (inputText.trim() && charCount <= maxChars && !disabled) {
       onSend?.(inputText);
       setInputText("");
     }
@@ -51,9 +52,11 @@ const InputChatInterface = ({
   };
 
   const handleContainerClick = () => {
-    inputRef.current?.focus();
-    setIsFocused(true);
-    onClick?.();
+    if (!disabled) {
+      inputRef.current?.focus();
+      setIsFocused(true);
+      onClick?.();
+    }
   };
 
   return (
@@ -62,11 +65,12 @@ const InputChatInterface = ({
         <div
           onClick={handleContainerClick}
           className={joinClasses(
-            "h-12 rounded-full text-sm px-6 py-3 flex-1 cursor-text",
+            "h-12 rounded-full text-sm px-6 py-3 flex-1",
             "flex items-center justify-between",
             "transition-all duration-300 bg-[#2e2e2e]",
             isFocused ? "ring-1 ring-[rgba(255,255,255,0.3)] shadow-[0_0_15px_rgba(255,255,255,0.1)]" : "ring-1 ring-[#4a4a4a]",
-            charCount > maxChars && "ring-2 ring-red-500"
+            charCount > maxChars && "ring-2 ring-red-500",
+            disabled ? "cursor-not-allowed opacity-75" : "cursor-text"
           )}
         >
           <div className="flex-1 overflow-hidden">
@@ -78,13 +82,18 @@ const InputChatInterface = ({
               onKeyDown={handleKeyPress}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              placeholder="Type your message..."
-              className="w-full bg-transparent text-white/90 outline-none placeholder:text-gray-400"
+              placeholder={disabled ? "Generating response..." : "Type your message..."}
+              className={joinClasses(
+                "w-full bg-transparent text-white/90 outline-none placeholder:text-gray-400",
+                disabled && "cursor-not-allowed"
+              )}
               maxLength={maxChars + 1}
+              disabled={disabled}
+              aria-label="Message input"
             />
           </div>
           <div className={joinClasses(
-            "ml-2 text-xs",
+            "ml-2 text-xs transition-colors duration-200",
             charCount > maxChars ? "text-red-400" :
             charCount > maxChars * 0.8 ? "text-orange-400" :
             charCount > maxChars * 0.6 ? "text-yellow-400" :
@@ -104,11 +113,12 @@ const InputChatInterface = ({
             setIsHovered(false);
             onSendHover?.(false);
           }}
-          disabled={!inputText.trim() || charCount > maxChars}
-          className={`btn ${inputText.trim() && charCount <= maxChars ? 'active' : ''}`}
+          disabled={!inputText.trim() || charCount > maxChars || disabled}
+          className={`btn ${inputText.trim() && charCount <= maxChars && !disabled ? 'active' : ''} ${disabled ? 'opacity-50' : ''}`}
+          aria-label="Send message"
         >
           <div className="send-icon-wrapper flex items-center justify-center">
-            <Send className="w-5 h-5 transition-all duration-200" />
+            <Send className={`w-5 h-5 transition-all duration-200 ${disabled ? 'opacity-50' : ''}`} />
           </div>
         </button>
       </div>
@@ -205,7 +215,6 @@ const InputChatInterface = ({
         }
 
         .btn:disabled {
-          opacity: 0.5;
           cursor: not-allowed;
         }
 

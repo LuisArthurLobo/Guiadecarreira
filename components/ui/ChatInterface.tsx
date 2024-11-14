@@ -7,6 +7,8 @@ import InputChatInterface from '@/components/ui/InputChatInterface';
 import UserProfile from '@/components/ui/UserProfile';
 import { UserChatBubble, BotChatBubble } from '@/components/ui/ChatBubble';
 import CareerPromptsDialog from '@/components/ui/CareerPromptsDialog';
+import geminiService from '@/geminiService.js';
+import MarkdownIt from 'markdown-it';
 
 const ChatInterface = ({ onLogout }) => {
   // State Management
@@ -20,14 +22,13 @@ const ChatInterface = ({ onLogout }) => {
   const [inputFocused, setInputFocused] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState(null);
   const [isPromptsDialogOpen, setIsPromptsDialogOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const messagesEndRef = useRef(null);
-
-  const botResponses = [
-    "I understand! 🤔 Let me see what I can do...",
-    "Got it! 👍 Looking for the best answer for you.",
-    "On it! 🚀 Searching for relevant information.",
-    "Interesting! ✨ I'll try to help in the best way possible!"
-  ];
+  const md = new MarkdownIt({
+    linkify: true,
+    breaks: true,
+    html: true
+  });
 
   // Effects
   useEffect(() => {
@@ -39,7 +40,7 @@ const ChatInterface = ({ onLogout }) => {
       setMessages([{
         id: 1,
         text: <>
-          Welcome {parsedUserInfo.name}! 👋 I'm your career guidance assistant.{' '}
+          Welcome {parsedUserInfo.name}! 👋 I'm your AI assistant powered by Gemini.{' '}
           <button 
             onClick={(e) => {
               e.stopPropagation();
@@ -68,20 +69,44 @@ const ChatInterface = ({ onLogout }) => {
   }, [messages]);
 
   // Handlers
-  const handlePromptSelect = (selectedPrompt) => {
+  const handlePromptSelect = async (selectedPrompt) => {
     setMessages(prev => [
       ...prev,
       {
         id: prev.length + 1,
         text: selectedPrompt,
         sender: 'user'
-      },
-      {
-        id: prev.length + 2,
-        text: "That's a great topic! Let's explore it together. Can you tell me more about your thoughts on this?",
-        sender: 'bot'
       }
     ]);
+
+    setTypingMessageId(messages.length + 2);
+    setIsGenerating(true);
+
+    try {
+      const response = await geminiService.generateResponse(selectedPrompt);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          text: md.render(response),
+          sender: 'bot',
+          isHtml: true
+        }
+      ]);
+    } catch (error) {
+      console.error('Error generating response:', error);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          text: "I apologize, but I encountered an error. Please try again.",
+          sender: 'bot'
+        }
+      ]);
+    } finally {
+      setTypingMessageId(null);
+      setIsGenerating(false);
+    }
   };
 
   const scrollToBottom = () => {
@@ -108,24 +133,48 @@ const ChatInterface = ({ onLogout }) => {
   };
 
   const handleSendMessage = async (text) => {
-    if (text.trim() === "") return;
+    if (text.trim() === "" || isGenerating) return;
     
     const newUserMessageId = messages.length + 1;
     setMessages(prev => [...prev, { id: newUserMessageId, text, sender: 'user' }]);
     setTypingMessageId(newUserMessageId + 1);
+    setIsGenerating(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const botResponse = botResponses[Math.floor(Math.random() * botResponses.length)];
-      setMessages(prev => [...prev, { id: newUserMessageId + 1, text: botResponse, sender: 'bot' }]);
+      const response = await geminiService.generateResponse(text);
+      setMessages(prev => [...prev, { 
+        id: newUserMessageId + 1, 
+        text: md.render(response), 
+        sender: 'bot',
+        isHtml: true 
+      }]);
+    } catch (error) {
+      console.error('Error generating response:', error);
+      setMessages(prev => [...prev, { 
+        id: newUserMessageId + 1, 
+        text: "I apologize, but I encountered an error. Please try again.",
+        sender: 'bot' 
+      }]);
     } finally {
       setTypingMessageId(null);
+      setIsGenerating(false);
     }
   };
 
   const handleCopyMessage = async (text, messageId) => {
     try {
-      const textToCopy = typeof text === 'string' ? text : text.props.children.join('');
+      let textToCopy;
+      if (typeof text === 'string') {
+        textToCopy = text;
+      } else if (text.props?.dangerouslySetInnerHTML) {
+        // Strip HTML tags for copying
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = text.props.dangerouslySetInnerHTML.__html;
+        textToCopy = tempDiv.textContent || tempDiv.innerText;
+      } else {
+        textToCopy = text.props?.children?.join('') || '';
+      }
+      
       await navigator.clipboard.writeText(textToCopy);
       setCopiedMessageId(messageId);
       setTimeout(() => setCopiedMessageId(null), 2000);
@@ -144,13 +193,25 @@ const ChatInterface = ({ onLogout }) => {
       .slice(0, 2);
   };
 
+  const renderBotMessage = (message) => {
+    if (message.isHtml) {
+      return (
+        <div 
+          dangerouslySetInnerHTML={{ __html: message.text }}
+          className="prose prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0 prose-pre:my-1"
+        />
+      );
+    }
+    return message.text;
+  };
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] p-4">
       <Card className="w-full max-w-lg transform transition-all duration-300 bg-[#3a3a3a] border-none shadow-[inset_0_0px_0px_0.5px_rgba(0,0,0,0.2),rgba(0,0,0,0.03)_0px_0.25em_0.3em_-1px,rgba(0,0,0,0.02)_0px_0.15em_0.25em_-1px]">
         {/* Header Section */}
         <CardHeader className="space-y-1 border-b border-[#4a4a4a] pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-bold text-white">AI Assistant</CardTitle>
+            <CardTitle className="text-2xl font-bold text-white">Gemini Assistant</CardTitle>
             <UserProfile onLogout={onLogout} />
           </div>
         </CardHeader>
@@ -171,7 +232,10 @@ const ChatInterface = ({ onLogout }) => {
                 ) : (
                   <BotChatBubble
                     key={message.id}
-                    message={message}
+                    message={{
+                      ...message,
+                      text: renderBotMessage(message)
+                    }}
                     isTyping={typingMessageId === message.id}
                     shouldBounce={shouldBounce}
                     isFocused={inputFocused}
@@ -194,6 +258,7 @@ const ChatInterface = ({ onLogout }) => {
               onBlur={handleInputBlur}
               onChange={handleInputChange}
               onSendHover={setIsSendHovered}
+              disabled={isGenerating}
             />
           </div>
         </CardContent>
