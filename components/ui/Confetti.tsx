@@ -1,7 +1,29 @@
 import React, { useState, useEffect } from 'react';
 
-const Confetti = ({ active }) => {
-  const [confetti, setConfetti] = useState([]);
+interface ConfettiProps {
+  active: boolean;
+}
+
+interface ConfettiPiece {
+  id: number;
+  x: number;
+  y: number;
+  rotation: number;
+  scale: number;
+  speedX: number;
+  speedY: number;
+  speedRotation: number;
+  shape: 'star' | 'circle';
+  gradientColors: string[];
+  gradientOffset: number;
+  pulseSpeed: number;
+  oscillationSpeed: number;
+  blurAmount: number;
+  baseOpacity: number;
+}
+
+const Confetti: React.FC<ConfettiProps> = ({ active }) => {
+  const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
   
   useEffect(() => {
     if (active) {
@@ -12,10 +34,9 @@ const Confetti = ({ active }) => {
         rotation: Math.random() * 360,
         scale: Math.random() * 1.5 + 0.8,
         speedX: Math.random() * 8 - 4,
-        speedY: Math.random() * 0.8 + 0.2, // Very slow falling
+        speedY: Math.random() * 0.8 + 0.2,
         speedRotation: Math.random() * 15 - 7.5,
-        shape: Math.random() > 0.5 ? 'star' : 'circle',
-        // Match the gradient colors from the button
+        shape: (Math.random() > 0.5 ? 'star' : 'circle') as ('star' | 'circle'),
         gradientColors: [
           '#22ffff',
           '#3c64ff',
@@ -28,11 +49,11 @@ const Confetti = ({ active }) => {
           '#07ff77',
           '#22ffff'
         ],
-        gradientOffset: Math.random() * 360, // Random start position in gradient
+        gradientOffset: Math.random() * 360,
         pulseSpeed: Math.random() * 1.5 + 0.5,
         oscillationSpeed: Math.random() * 1.5 + 0.5,
-        blurAmount: Math.random() * 0.5 + 0.5, // Variable blur for depth
-        baseOpacity: Math.random() * 0.3 + 0.3 // Lower opacity for ethereal effect
+        blurAmount: Math.random() * 0.5 + 0.5,
+        baseOpacity: Math.random() * 0.3 + 0.3
       }));
       
       setConfetti(pieces);
@@ -50,7 +71,7 @@ const Confetti = ({ active }) => {
               x: piece.x + piece.speedX * 0.1 + Math.sin(Date.now() / 2000 * piece.oscillationSpeed) * 1.5,
               y: piece.y + piece.speedY,
               rotation: piece.rotation + piece.speedRotation * 0.2,
-              speedY: piece.speedY + 0.015, // Very gentle gravity
+              speedY: piece.speedY + 0.015,
               speedX: piece.speedX * 0.99
             }))
             .filter(piece => piece.y < 120);

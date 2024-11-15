@@ -15,7 +15,13 @@ import {
   Users,
 } from "lucide-react";
 
-const CareerPromptsDialog = ({ isOpen, onClose, onSelectPrompt }) => {
+interface CareerPromptsDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectPrompt: (prompt: string) => void;
+}
+
+const CareerPromptsDialog = ({ isOpen, onClose, onSelectPrompt }: CareerPromptsDialogProps) => {
   const promptCategories = [
     {
       icon: <Star className="w-5 h-5 text-emerald-400" />,
@@ -69,7 +75,7 @@ const CareerPromptsDialog = ({ isOpen, onClose, onSelectPrompt }) => {
                   <Users className="w-4 h-4 text-white/80" />
                 </div>
                 <span className="text-white/60">
-                  Choose a prompt and let's explore your journey together ✨
+                  Choose a prompt and vamos explore your journey together ✨
                 </span>
               </div>
             </div>
@@ -124,7 +130,7 @@ const CareerPromptsDialog = ({ isOpen, onClose, onSelectPrompt }) => {
               shadow-[0px_0px_0px_1px_rgba(165,165,165,0.04),-4px_4px_4px_-0.5px_rgba(0,0,0,0.04),-8px_8px_8px_-1.5px_rgba(0,0,0,0.08)]">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <p className="text-sm text-white/80 leading-relaxed relative z-10">
-                Every career journey is unique and beautiful – like a story waiting to be told. Let's explore your professional path together, understanding your dreams, and crafting the next chapter of your career with purpose and passion.
+                Every career journey is unique and beautiful – like a story waiting to be told. vamoss explore your professional path together, understanding your dreams, and crafting the next chapter of your career with purpose and passion.
               </p>
             </div>
           </div>

@@ -2,11 +2,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send } from "lucide-react";
 
-const joinClasses = (...classes) => {
+const joinClasses = (...classes: (string | boolean | undefined | null)[]): string => {
   return classes.filter(Boolean).join(' ');
 };
 
-const InputChatInterface = ({ 
+interface InputChatInterfaceProps {
+  onSend: (text: string) => void;
+  onFocus: () => void;
+  onBlur: () => void;
+  onChange: (text: string) => void;
+  onSendHover: (isHovered: boolean) => void;
+  onClick: () => void;
+  disabled: boolean;
+}
+
+const InputChatInterface: React.FC<InputChatInterfaceProps> = ({
   onSend, 
   onFocus, 
   onBlur, 
@@ -18,9 +28,8 @@ const InputChatInterface = ({
   const [inputText, setInputText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [charCount, setCharCount] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const inputRef = useRef(null);
-  const maxChars = 256; // Increased for Gemini API compatibility
+  const inputRef = useRef<HTMLInputElement>(null);
+  const maxChars = 256;
 
   useEffect(() => {
     setCharCount(inputText.length);
@@ -44,7 +53,7 @@ const InputChatInterface = ({
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -106,11 +115,9 @@ const InputChatInterface = ({
         <button
           onClick={handleSend}
           onMouseEnter={() => {
-            setIsHovered(true);
             onSendHover?.(true);
           }}
           onMouseLeave={() => {
-            setIsHovered(false);
             onSendHover?.(false);
           }}
           disabled={!inputText.trim() || charCount > maxChars || disabled}

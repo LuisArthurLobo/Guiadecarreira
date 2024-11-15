@@ -1,9 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const EmojiAvatar = ({ isTyping = false, shouldBounce = false, isFocused = false, isSendHovered = false }) => {
+interface EmojiAvatarProps {
+  isTyping?: boolean;
+  shouldBounce?: boolean;
+  isFocused?: boolean;
+  isSendHovered?: boolean;
+}
+
+const EmojiAvatar: React.FC<EmojiAvatarProps> = ({
+  isTyping = false,
+  shouldBounce = false,
+  isFocused = false,
+  isSendHovered = false
+}) => {
   const [isBlinking, setIsBlinking] = useState(false);
   const [watchingPosition, setWatchingPosition] = useState(0);
-  const blinkIntervalRef = useRef(null);
+  const blinkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const startBlinkInterval = () => {

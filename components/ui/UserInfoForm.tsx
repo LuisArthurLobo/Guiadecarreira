@@ -2,17 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, AlertCircle, Loader2, Send, Smile } from "lucide-react";
 import Confetti from '@/components/ui/Confetti';
 
-const UserInfoForm = ({ onSubmit }) => {
-  const [userInfo, setUserInfo] = useState({ name: '', email: '' });
-  const [errors, setErrors] = useState({ name: '', email: '' });
+interface UserInfoFormProps {
+  onSubmit: (userInfo: UserInfo) => void;
+}
+
+interface UserInfo {
+  name: string;
+  email: string;
+}
+
+interface Errors {
+  name?: string;
+  email?: string;
+  submit?: string;
+}
+
+const UserInfoForm: React.FC<UserInfoFormProps> = ({ onSubmit }) => {
+  const [userInfo, setUserInfo] = useState<UserInfo>({ name: '', email: '' });
+  const [errors, setErrors] = useState<Errors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [focusedField, setFocusedField] = useState(null);
+  const [focusedField, setFocusedField] = useState<'name' | 'email' | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [greeting, setGreeting] = useState('👋 Boas vindaaas! Que horas são?!');
 
@@ -27,16 +41,16 @@ const UserInfoForm = ({ onSubmit }) => {
     }
   }, []);
 
-  const validateEmail = (email) => {
+  const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const validateName = (name) => {
+  const validateName = (name: string): boolean => {
     return name.trim().length >= 2;
   };
 
-  const handleFocus = (field) => {
+  const handleFocus = (field: 'name' | 'email'): void => {
     setFocusedField(field);
     if (field === 'name') {
       setGreeting('😊 Hey, como posso te chamar?');
@@ -45,16 +59,16 @@ const UserInfoForm = ({ onSubmit }) => {
     }
   };
 
-  const handleBlur = () => {
+  const handleBlur = (): void => {
     setFocusedField(null);
     if (userInfo.name) {
       setGreeting(`✨ Que nome bonito, ${userInfo.name}!`);
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!validateName(userInfo.name) || !validateEmail(userInfo.email)) return;
-
+  
     setIsLoading(true);
     setGreeting('🚀 Deixando tudo pronto pra você...');
     
@@ -65,14 +79,20 @@ const UserInfoForm = ({ onSubmit }) => {
       setShowConfetti(true);
       
       setTimeout(() => {
-        if (onSubmit) onSubmit(userInfo);
+        onSubmit(userInfo);
       }, 1000);
-    } catch (error) {
-      setErrors(prev => ({ ...prev, submit: 'Something went wrong. Let\'s try again?' }));
+    } catch (err) {
+      const error = err as Error;
+      setErrors(prev => ({ ...prev, submit: error.message || 'Something went wrong. Please try again.' }));
       setGreeting('😅 Oops! A little hiccup...');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const { name, value } = e.target;
+    setUserInfo(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -102,8 +122,9 @@ const UserInfoForm = ({ onSubmit }) => {
               <div className="relative">
                 <Input
                   id="name"
+                  name="name"
                   value={userInfo.name}
-                  onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
+                  onChange={handleInputChange}
                   onFocus={() => handleFocus('name')}
                   onBlur={handleBlur}
                   placeholder="A gente vai te chamar assim"
@@ -131,9 +152,10 @@ const UserInfoForm = ({ onSubmit }) => {
               <div className="relative">
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   value={userInfo.email}
-                  onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
+                  onChange={handleInputChange}
                   onFocus={() => handleFocus('email')}
                   onBlur={handleBlur}
                   placeholder="Algo tipo... Guia_lindão@gmail.com"

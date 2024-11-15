@@ -1,204 +1,115 @@
 import React from 'react';
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Check, Copy } from "lucide-react";
-import EmojiAvatar from '@/components/ui/EmojiAvatar';
+import { ClipboardCheck, ClipboardCopy } from 'lucide-react';
 
-const joinClasses = (...classes) => {
-  return classes.filter(Boolean).join(' ');
-};
+interface BadgeProps {
+  children: React.ReactNode;
+  variant?: 'outline';
+  className?: string;
+}
 
-export const UserChatBubble = ({ 
-  message, 
-  userInitials, 
-  copiedMessageId, 
-  onCopy 
+const Badge: React.FC<BadgeProps> = ({ children, variant, className }) => (
+  <div className={`inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full 
+    ${variant === 'outline' ? 'border border-gray-500' : ''} 
+    ${className}`}
+  >
+    {children}
+  </div>
+);
+
+interface Message {
+  id: string;
+  text: string | React.ReactNode;
+  sender: 'user' | 'bot';
+  isHtml?: boolean;
+  isMarkdown?: boolean;
+}
+
+interface ChatBubbleProps {
+  message: Message;
+  type: 'user' | 'bot';
+  userInitials?: string;
+  isTyping?: boolean;
+  shouldBounce?: boolean;
+  isFocused?: boolean;
+  isSendHovered?: boolean;
+  copiedMessageId: string | null;
+  onCopy: (text: string, messageId: string) => void;
+}
+
+const ChatBubble: React.FC<ChatBubbleProps> = ({
+  message,
+  type,
+  userInitials,
+  isTyping,
+  copiedMessageId,
+  onCopy
 }) => {
-  return (
-    <div className="flex justify-end">
-      <div className="flex items-end space-x-2 flex-row-reverse space-x-reverse group">
-        <Avatar className="h-8 w-8 bg-[#4a4a4a] border border-[#5a5a5a] transition-transform hover:scale-110">
-          <AvatarFallback className="text-white bg-transparent">
-            {userInitials}
-          </AvatarFallback>
-        </Avatar>
-        <ChatBubbleContent
-          message={message}
-          copiedMessageId={copiedMessageId}
-          onCopy={onCopy}
-          isBot={false}
+  const isUser = type === 'user';
+  const isCopied = copiedMessageId === message.id;
+  
+  const renderContent = () => {
+    if (message.isHtml) {
+      return (
+        <div 
+          dangerouslySetInnerHTML={{ __html: message.text as string }}
+          className="prose prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0 prose-pre:my-1"
         />
-      </div>
-    </div>
-  );
-};
+      );
+    }
+    return message.text;
+  };
 
-export const BotChatBubble = ({ 
-  message, 
-  isTyping, 
-  shouldBounce, 
-  isFocused, 
-  isSendHovered, 
-  copiedMessageId, 
-  onCopy 
-}) => {
-  return (
-    <div className="flex justify-start">
-      <div className="flex items-end space-x-2 group">
-        <EmojiAvatar
-          isTyping={isTyping}
-          shouldBounce={shouldBounce}
-          isFocused={isFocused}
-          isSendHovered={isSendHovered}
-        />
-        <ChatBubbleContent
-          message={message}
-          copiedMessageId={copiedMessageId}
-          onCopy={onCopy}
-          isBot={true}
-        />
-      </div>
-    </div>
-  );
-};
+  const copyContent = () => {
+    const text = typeof message.text === 'string' 
+      ? message.text 
+      : message.isHtml 
+        ? (message.text as { props: { dangerouslySetInnerHTML: { __html: string } } }).props.dangerouslySetInnerHTML.__html
+        : '';
+    onCopy(text, message.id);
+  };
 
-const ChatBubbleContent = ({ message, copiedMessageId, onCopy, isBot }) => {
   return (
-    <div 
-      onClick={() => onCopy(message.text, message.id)}
-      className={joinClasses(
-        "chat-bubble relative px-4 py-2 rounded-2xl max-w-md break-words cursor-pointer select-all",
-        isBot ? "bot-bubble" : "user-bubble"
+    <div className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
+      {!isUser ? (
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#4a4a4a] flex items-center justify-center">
+          <Badge variant="outline" className="text-xs font-medium">AI</Badge>
+        </div>
+      ) : (
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#4a4a4a] flex items-center justify-center">
+          <span className="text-xs font-medium">{userInitials}</span>
+        </div>
       )}
-    >
-      {message.text}
-      <div className={joinClasses(
-        "copy-indicator absolute -right-2 -top-2 p-1 rounded-full transition-all duration-300",
-        copiedMessageId === message.id ? "opacity-100 scale-100" : "opacity-0 scale-0",
-        "group-hover:opacity-100 group-hover:scale-100"
-      )}>
-        {copiedMessageId === message.id ? (
-          <div className="bg-green-500/90 text-white p-1 rounded-full shadow-lg">
-            <Check className="h-3 w-3" />
-          </div>
-        ) : (
-          <div className="bg-gray-700/90 text-white p-1 rounded-full shadow-lg hover:bg-gray-600/90">
-            <Copy className="h-3 w-3" />
+      
+      <div 
+        className={`group relative max-w-[80%] rounded-lg px-4 py-2 ${
+          isUser 
+            ? 'bg-[#4a4a4a] text-white'
+            : 'bg-[#2e2e2e] text-white'
+        }`}
+      >
+        <div className="flex items-start gap-2">
+          <div className="flex-grow break-words">{renderContent()}</div>
+          
+          <button
+            onClick={copyContent}
+            className={`opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-[#5a5a5a] rounded ${
+              isCopied ? 'text-green-500' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            {isCopied ? <ClipboardCheck size={16} /> : <ClipboardCopy size={16} />}
+          </button>
+        </div>
+        
+        {isTyping && (
+          <div className="absolute -bottom-6 left-0 flex items-center gap-1">
+            <span className="animate-bounce delay-100">•</span>
+            <span className="animate-bounce delay-200">•</span>
+            <span className="animate-bounce delay-300">•</span>
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        .chat-bubble {
-          position: relative;
-          transform: scale(1);
-          z-index: 1;
-          isolation: isolate;
-          transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .chat-bubble::before {
-          content: "";
-          position: absolute;
-          inset: -1px;
-          background: conic-gradient(
-            from var(--mask) at 50% 50%,
-            #22ffff 0%,
-            #3c64ff 11%,
-            #c03afc 22%,
-            #ff54e8 33%,
-            #ff5959 44%,
-            #ff9a07 55%,
-            #feff07 66%,
-            #58ff07 77%,
-            #07ff77 88%,
-            #22ffff 100%
-          );
-          border-radius: inherit;
-          z-index: -2;
-          opacity: 0;
-          transition: all 0.3s ease;
-          filter: blur(0.5em);
-        }
-
-        .chat-bubble::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          z-index: -1;
-          transition: all 0.3s ease;
-        }
-
-        .bot-bubble {
-          background: linear-gradient(135deg, #9e8ad3 0%, #3c64ff 100%);
-          color: white;
-          box-shadow: rgba(34, 255, 255, 0.1) 0px 4px 12px;
-        }
-
-        .user-bubble {
-          background: #4a4a4a;
-          color: white;
-          box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
-        }
-
-        .chat-bubble:active {
-          transform: scale(0.98);
-        }
-
-        :global(.group:hover) .chat-bubble {
-          transform: scale(1.02);
-        }
-
-        :global(.group:hover) .bot-bubble::before {
-          opacity: 0.5;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        :global(.group:hover) .user-bubble {
-          background: #5a5a5a;
-        }
-
-        .copy-indicator {
-          transform-origin: top right;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-          animation: copySuccess 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        @property --mask {
-          syntax: "<angle>";
-          inherits: false;
-          initial-value: 30deg;
-        }
-
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 0.3;
-            --mask: 30deg;
-            filter: blur(0.5em);
-          }
-          50% {
-            opacity: 0.5;
-            --mask: 110deg;
-            filter: blur(1em);
-          }
-        }
-
-        @keyframes copySuccess {
-          0% {
-            transform: scale(0) rotate(-90deg);
-            opacity: 0;
-          }
-          100% {
-            transform: scale(1) rotate(0deg);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   );
 };
 
-export default {
-  UserChatBubble,
-  BotChatBubble
-};
+export default ChatBubble;
