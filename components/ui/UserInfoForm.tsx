@@ -14,16 +14,16 @@ const UserInfoForm = ({ onSubmit }) => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [greeting, setGreeting] = useState('👋 Welcome!');
+  const [greeting, setGreeting] = useState('👋 Boas vindaaas! Que horas são?!');
 
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
       setGreeting('🌅 Good morning! Ready to chat?');
     } else if (hour >= 12 && hour < 18) {
-      setGreeting('☀️ Good afternoon! Let\'s talk!');
+      setGreeting('☀️ Boa tardeee! Bora conversar?');
     } else {
-      setGreeting('🌙 Good evening! Perfect time for a chat!');
+      setGreeting('🌙 Boa noiteee! Tente dormir cedo hoje');
     }
   }, []);
 
@@ -39,16 +39,16 @@ const UserInfoForm = ({ onSubmit }) => {
   const handleFocus = (field) => {
     setFocusedField(field);
     if (field === 'name') {
-      setGreeting('😊 What should I call you?');
+      setGreeting('😊 Hey, como posso te chamar?');
     } else if (field === 'email') {
-      setGreeting('📧 Let\'s stay connected!');
+      setGreeting('📧 Bora manter contato!');
     }
   };
 
   const handleBlur = () => {
     setFocusedField(null);
     if (userInfo.name) {
-      setGreeting(`✨ Nice to meet you, ${userInfo.name}!`);
+      setGreeting(`✨ Que nome bonito, ${userInfo.name}!`);
     }
   };
 
@@ -56,7 +56,7 @@ const UserInfoForm = ({ onSubmit }) => {
     if (!validateName(userInfo.name) || !validateEmail(userInfo.email)) return;
 
     setIsLoading(true);
-    setGreeting('🚀 Getting everything ready...');
+    setGreeting('🚀 Deixando tudo pronto pra você...');
     
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -82,7 +82,7 @@ const UserInfoForm = ({ onSubmit }) => {
       <Card className="w-full max-w-md transform transition-all duration-300 bg-[#3a3a3a] border-none shadow-[inset_0_0px_0px_0.5px_rgba(0,0,0,0.2),rgba(0,0,0,0.03)_0px_0.25em_0.3em_-1px,rgba(0,0,0,0.02)_0px_0.15em_0.25em_-1px]">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-white">
-            Let's Chat
+            Guia de carreira
           </CardTitle>
           <CardDescription className="text-lg font-medium text-gray-300">
             {greeting}
@@ -94,7 +94,7 @@ const UserInfoForm = ({ onSubmit }) => {
             {/* Name Input */}
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium text-white flex items-center gap-2">
-                Name
+                Seu nome
                 {userInfo.name && validateName(userInfo.name) && (
                   <Smile className="w-4 h-4 text-green-500 animate-bounce" />
                 )}
@@ -106,7 +106,7 @@ const UserInfoForm = ({ onSubmit }) => {
                   onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
                   onFocus={() => handleFocus('name')}
                   onBlur={handleBlur}
-                  placeholder="What should we call you?"
+                  placeholder="A gente vai te chamar assim"
                   className={`pl-4 h-11 bg-[#2e2e2e] text-white border-none transition-all duration-300
                     ${focusedField === 'name' ? 'ring-2 ring-[#22ffff] ring-offset-2 ring-offset-[#3a3a3a] scale-105' : ''}
                     ${errors.name ? 'ring-2 ring-red-500' : ''}`}
@@ -123,7 +123,7 @@ const UserInfoForm = ({ onSubmit }) => {
             {/* Email Input */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-white flex items-center gap-2">
-                Email
+                Seu melhor email
                 {userInfo.email && validateEmail(userInfo.email) && (
                   <CheckCircle2 className="w-4 h-4 text-green-500 animate-bounce" />
                 )}
@@ -136,7 +136,7 @@ const UserInfoForm = ({ onSubmit }) => {
                   onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
                   onFocus={() => handleFocus('email')}
                   onBlur={handleBlur}
-                  placeholder="your.email@example.com"
+                  placeholder="Algo tipo... Guia_lindão@gmail.com"
                   className={`pl-4 h-11 bg-[#2e2e2e] text-white border-none transition-all duration-300
                     ${focusedField === 'email' ? 'ring-2 ring-[#22ffff] ring-offset-2 ring-offset-[#3a3a3a] scale-105' : ''}
                     ${errors.email ? 'ring-2 ring-red-500' : ''}`}
@@ -185,7 +185,7 @@ const UserInfoForm = ({ onSubmit }) => {
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    Let's Begin!
+                    Vamos começar!
                   </>
                 )}
               </span>

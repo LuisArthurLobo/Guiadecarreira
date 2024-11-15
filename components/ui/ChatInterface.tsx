@@ -40,7 +40,7 @@ const ChatInterface = ({ onLogout }) => {
       setMessages([{
         id: 1,
         text: <>
-          Welcome {parsedUserInfo.name}! 👋 I'm your AI assistant powered by Gemini.{' '}
+          Eai, {parsedUserInfo.name}! 👋 Vou te ajudar em Design e produtos digitais.{' '}
           <button 
             onClick={(e) => {
               e.stopPropagation();
@@ -48,8 +48,8 @@ const ChatInterface = ({ onLogout }) => {
             }}
             className="underline text-[#22ffff] hover:text-[#3c64ff] transition-colors duration-200 font-medium"
           >
-            Click here to choose a topic
-          </button> you'd like to discuss!
+            Clique aqui pra ver alguns assuntos
+          </button> ou pergunte no chat o que quiser saber.
         </>,
         sender: "bot"
       }]);

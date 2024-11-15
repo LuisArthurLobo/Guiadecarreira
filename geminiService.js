@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/ge
 
 class GeminiService {
   constructor() {
-    const apiKey = process.env.GOOGLE_API_KEY || 'AIzaSyAE8EmRFUOm911J3w9Zw0gSwY73_1eaRk0';
+    const apiKey = process.env.GOOGLE_API_KEY || 'AIzaSyA_wP-KCnnmRcLwFzf4l-dgvcqrHmwIRQE';
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
     
