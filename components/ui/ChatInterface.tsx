@@ -5,9 +5,10 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import InputChatInterface from '@/components/ui/InputChatInterface';
 import UserProfile from '@/components/ui/UserProfile';
-import ChatBubble from '@/components/ui/ChatBubble';
+import { UserChatBubble, BotChatBubble } from '@/components/ui/ChatBubble';
 import CareerPromptsDialog from '@/components/ui/CareerPromptsDialog';
 import geminiService from '@/geminiService.js';
+import MarkdownIt from 'markdown-it';
 
 interface Message {
   id: string;
@@ -34,6 +35,11 @@ const ChatInterface: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   const [isPromptsDialogOpen, setIsPromptsDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const md = new MarkdownIt({
+    linkify: true,
+    breaks: true,
+    html: true
+  });
 
   useEffect(() => {
     const storedUserInfo = localStorage.getItem('userInfo');
@@ -43,7 +49,20 @@ const ChatInterface: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       
       setMessages([{
         id: '1',
-        text: `Hi, ${parsedUserInfo.name}! 👋 Ill help you with Design and digital products. Click here to see some topics or ask anything in the chat.`,
+        text: (
+          <>
+            Hi, {parsedUserInfo.name}! 👋 I&apos;ll help you with Design and digital products.{' '}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsPromptsDialogOpen(true);
+              }}
+              className="underline text-[#22ffff] hover:text-[#3c64ff] transition-colors duration-200 font-medium"
+            >
+              Click here to see some topics
+            </button> or ask anything in the chat.
+          </>
+        ),
         sender: "bot"
       }]);
     }
@@ -82,7 +101,7 @@ const ChatInterface: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         ...prev,
         {
           id: String(prev.length + 1),
-          text: response,
+          text: md.render(response),
           sender: 'bot',
           isHtml: true
         }
@@ -93,7 +112,7 @@ const ChatInterface: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         ...prev,
         {
           id: String(prev.length + 1),
-          text: "I apologize, but I encountered an error. Please try again.",
+          text: "Me desculpe, mas encontrei um erro. Por favor, tente novamente.",
           sender: 'bot'
         }
       ]);
@@ -143,15 +162,15 @@ const ChatInterface: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       const response = await geminiService.generateResponse(text);
       setMessages(prev => [...prev, { 
         id: String(Number(newUserMessageId) + 1), 
-        text: response,
+        text: md.render(response),
         sender: 'bot',
-        isMarkdown: true 
+        isHtml: true 
       }]);
     } catch (error) {
       console.error('Error generating response:', error);
       setMessages(prev => [...prev, { 
         id: String(Number(newUserMessageId) + 1), 
-        text: "I apologize, but I encountered an error. Please try again.",
+        text: "Me desculpe, mas encontrei um erro. Por favor, tente novamente.",
         sender: 'bot'
       }]);
     } finally {
@@ -160,9 +179,21 @@ const ChatInterface: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
     }
   };
 
-  const handleCopyMessage = async (text: string, messageId: string) => {
+  const handleCopyMessage = async (text: string | ReactNode, messageId: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      let textToCopy: string;
+      if (typeof text === 'string') {
+        textToCopy = text;
+      } else if ('props' in text && text.props?.dangerouslySetInnerHTML) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = text.props.dangerouslySetInnerHTML.__html;
+        textToCopy = tempDiv.textContent || tempDiv.innerText;
+      } else {
+        // @ts-expect-error: React node children handling
+        textToCopy = text.props?.children?.join('') || '';
+      }
+      
+      await navigator.clipboard.writeText(textToCopy);
       setCopiedMessageId(messageId);
       setTimeout(() => setCopiedMessageId(null), 2000);
     } catch (err) {
@@ -180,6 +211,18 @@ const ChatInterface: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       .slice(0, 2);
   };
 
+  const renderBotMessage = (message: Message) => {
+    if (message.isHtml) {
+      return (
+        <div 
+          dangerouslySetInnerHTML={{ __html: message.text as string }}
+          className="prose prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0 prose-pre:my-1"
+        />
+      );
+    }
+    return message.text;
+  };
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] p-4">
       <Card className="w-full max-w-lg transform transition-all duration-300 bg-[#3a3a3a] border-none shadow-[inset_0_0px_0px_0.5px_rgba(0,0,0,0.2),rgba(0,0,0,0.03)_0px_0.25em_0.3em_-1px,rgba(0,0,0,0.02)_0px_0.15em_0.25em_-1px]">
@@ -194,18 +237,29 @@ const ChatInterface: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
           <ScrollArea className="h-[60vh] px-4">
             <div className="space-y-4 py-4">
               {messages.map((message) => (
-                <ChatBubble
-                  key={message.id}
-                  message={message}
-                  type={message.sender}
-                  userInitials={getUserInitials()}
-                  isTyping={typingMessageId === message.id}
-                  shouldBounce={shouldBounce}
-                  isFocused={inputFocused}
-                  isSendHovered={isSendHovered}
-                  copiedMessageId={copiedMessageId}
-                  onCopy={handleCopyMessage}
-                />
+                message.sender === 'user' ? (
+                  <UserChatBubble
+                    key={message.id}
+                    message={message}
+                    userInitials={getUserInitials()}
+                    copiedMessageId={copiedMessageId}
+                    onCopy={handleCopyMessage}
+                  />
+                ) : (
+                  <BotChatBubble
+                    key={message.id}
+                    message={{
+                      ...message,
+                      text: renderBotMessage(message)
+                    }}
+                    isTyping={typingMessageId === message.id}
+                    shouldBounce={shouldBounce}
+                    isFocused={inputFocused}
+                    isSendHovered={isSendHovered}
+                    copiedMessageId={copiedMessageId}
+                    onCopy={handleCopyMessage}
+                  />
+                )
               ))}
               <div ref={messagesEndRef} />
             </div>
